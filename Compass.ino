@@ -74,35 +74,3 @@ void Compass_Heading()
   MAG_Heading = heading * 180/M_PI; 
 }
 
-
-void Read_Compass_old()
-{
-  int i = 0;
-  byte buff[6];
-
-  Wire.beginTransmission(CompassAddress); 
-  Wire.write((uint8_t)0x03);        //sends address to read from
-  Wire.endTransmission(); //end transmission
-
-    //Wire.beginTransmission(CompassAddress); 
-  Wire.requestFrom(CompassAddress, 6);    // request 6 bytes from device
-  while(Wire.available())   // ((Wire.available())&&(i<6))
-  { 
-    buff[i] = Wire.read();  // receive one byte
-    i++;
-  }
-  Wire.endTransmission(); //end transmission
-
-    if (i==6)  // All bytes received?
-  {
-    // MSB byte first, then LSB, X,Y,Z
-    magnetom_x = ((((int)buff[4]) << 8) | buff[5]);    // X axis (internal y axis)
-    magnetom_y = ((((int)buff[0]) << 8) | buff[1]);    // Y axis (internal x axis)
-    magnetom_z = ((((int)buff[2]) << 8) | buff[3]);    // Z axis
-    
-  }
-  else
-    Serial.println("!ERR: Mag data");
-}
-
-

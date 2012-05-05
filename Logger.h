@@ -2,6 +2,8 @@
 #define Logger_h
 
 #include "Pid.h"
+#include <TinyGPS.h>
+
 #define LOG_CTE 0
 #define PRINT_DATA 0
 #define PRINT_HEADINGS 0
@@ -134,6 +136,29 @@ class Logger {
     Serial.print("gps lon\t");
     Serial.print("curr Head\t");
     Serial.print("norm Heading");
+  }
+#endif
+
+#if PRINT_GPS == 1
+  static void logGpsReadings(long latitude, long longitude, TinyGPS *gps, float hdop) {
+    Serial.print("Lat: ");
+    Serial.print(latitude);
+    Serial.print(", Long: ");
+    Serial.print(longitude);
+    Serial.print(", Alt: ");
+    Serial.print(gps->f_altitude());
+    Serial.print(" Meters, GPS Heading: ");
+    Serial.print(gps->f_course());
+    Serial.print(" degrees");
+    unsigned char fix_type = gps->fix_type();
+    Serial.print(", Fix type: ");
+    Serial.write(fix_type);
+    unsigned char sats = gps->satellites();
+    Serial.print(", Sats: ");
+    Serial.print(sats, DEC);
+    Serial.print(", HDOP: ");
+    Serial.print(hdop);
+    Serial.println();
   }
 #endif
 };
