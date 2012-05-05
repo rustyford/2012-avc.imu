@@ -4,6 +4,8 @@
 #include <PID_v1.h>
 #include <Streaming.h>
 #include "Gps.h"
+#include "AvcCompass.h"
+#include <Wire.h>
 
 #define SET_WAYPOINT_BUTTON A2
 #define RESET_BUTTON A3
@@ -41,12 +43,14 @@ boolean isGpsLock = false;
 
 SoftwareSerial mySerial(RXPIN, TXPIN);
 Gps location;
+AvcCompass compass;
 
 void setup()
 {
   Serial.begin(57600);
   pinMode(GPS_LED,OUTPUT);
   Gps::init(&mySerial);
+  compass.init();
   pinMode(6,OUTPUT);
   digitalWrite(6,HIGH);
   pinMode(5,OUTPUT);
@@ -60,11 +64,13 @@ void loop()
 {
   controlGpsLed(&location);
   location.checkGps(&mySerial);
+  compass.update();
   // isUpdated can only be called once per checkGps call
   if (location.isUpdated()) {
     location.excelPrint();
   } else {
    // Serial << "skipping";
   }
+  compass.print();
   delay(50);
 }
