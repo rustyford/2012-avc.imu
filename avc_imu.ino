@@ -6,37 +6,18 @@
 #include "Gps.h"
 #include "AvcCompass.h"
 #include <Wire.h>
+#include "Logger.h"
 
-#define SET_WAYPOINT_BUTTON A2
-#define RESET_BUTTON A3
 #define GPS_LED 8
-#define SERVO_PIN 9
 
-#define SAMPLING_BLINK_MILLIS 200
 #define WAAS_BLINK_MILLIS 1000
-#define SAMPLING_COUNT 50
-#define WAYPOINT_COUNT 4
-#define REORIENT_THRESHOLD 20
-#define MAX_PID_DEVIATION_FROM_COMPASS 120
-#define MAX_STEERING_CHANGE 5
-
-float MAG_Heading;
-int currentHeading;
-int normalizedHeading;
-float gpsHeading;
-boolean reorient = true;
-
-Gps *waypoints[WAYPOINT_COUNT];
-int waypointSamplingIndex = -1;
-float samplingHdop = 0;
-int sampleCount = 0;
-int nextWaypoint = 0;
-int numWaypointsSet = 0;
+#define LOOP_SPEED 50 // HERTZ
 
 // LED vars
-boolean isSamplingGps = false;
 int isLedOn = 0;
 boolean isGpsLock = false;
+
+unsigned long previousTime = 0;
 
 #define RXPIN A0
 #define TXPIN A1
@@ -47,7 +28,7 @@ AvcCompass compass;
 
 void setup()
 {
-  Serial.begin(57600);
+  Serial.begin(19200);
   pinMode(GPS_LED,OUTPUT);
   Gps::init(&mySerial);
   compass.init();
@@ -62,15 +43,11 @@ void setup()
 
 void loop()
 {
-  controlGpsLed(&location);
-  location.checkGps(&mySerial);
-  compass.update();
-  // isUpdated can only be called once per checkGps call
-  if (location.isUpdated()) {
-    location.excelPrint();
-  } else {
-   // Serial << "skipping";
+  if (millis() - previousTime > 1000 / LOOP_SPEED) {
+    previousTime = millis();
+    controlGpsLed(&location);
+    location.checkGps(&mySerial);
+    compass.update();
+    Logger::logImuData (&location, &compass);
   }
-  compass.print();
-  delay(50);
 }

@@ -118,6 +118,8 @@ class Gps {
   }
 
   static void init(SoftwareSerial *mySerial) {
+    mySerial->begin(9600);
+#if SET_UP_GPS
     byte Update5Hz[]  = {0x03, 0x0E, 0x05, 0x00};
     byte WAASEnable[] = {0x03, 0x37, 0x01, 0x00};
     byte GGA_RMC[10]    = {0x09, 0x08, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};
@@ -129,7 +131,6 @@ class Gps {
                                        //                               1 = VTG Enable
                                        //                                     1 = ZDA Enable
                                        //                                           1 = Attributes
-    mySerial->begin(9600);
     sndByte(mySerial, 0x0A);
     sndByte(mySerial, 0x0D);
     // Disable all but GGA Messages
@@ -138,6 +139,7 @@ class Gps {
     sendCmd(mySerial, Update5Hz);
     // Enable WAAS
     sendCmd(mySerial, WAASEnable);
+#endif
   }  
 };
 

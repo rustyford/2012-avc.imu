@@ -1,166 +1,41 @@
 #ifndef Logger_h
 #define Logger_h
 
-#include "Pid.h"
 #include <TinyGPS.h>
 
-#define LOG_CTE 0
-#define PRINT_DATA 0
-#define PRINT_HEADINGS 0
-#define LOG_PID 1
-
 class Logger {
-  public:
-#if LOG_PID == 1
-  static void logPid(float error, float integral, float differential, float kp, float ki, float kd, Gps *start, Gps *dest, Gps *car, float pid, int useCompass, int steeringDiff, int nextWaypoint) {
-    Serial.print(Pid::getCrosstrackError(start, dest, car));
-    Serial.print("\t");
-    Serial.print(pid);
-    Serial.print("\t");
-    Serial.print(steeringDiff);
-    Serial.print("\t");
 
-    printFloat(error, 2);
-    Serial.print("\t");
-    printFloat(integral, 2);
-    Serial.print("\t");
-    printFloat(differential, 2);
-    Serial.print("\t");
-    printFloat(kp, 2);
-    Serial.print("\t");
-    printFloat(ki, 7);
-    Serial.print("\t");
-    printFloat(kd, 2);
-    Serial.print("\t");
-
-    Serial.print(useCompass);
-    Serial.print("\t");
-    Serial.print(nextWaypoint);
-    Serial.print("\t");
-    Serial.println();
+public:
+  static void logImuData (Gps *gps, AvcCompass *compass) {
+    int count = 0;
+    count += Serial.print(gps->getLatitude());
+    count += Serial.print(",");
+    count += Serial.print(gps->getLongitude());
+    count += Serial.print(",");
+    count += Serial.print(gps->getHdop());
+    count += Serial.print(",");
+    count += Serial.print(gps->getDistanceTraveled());
+    count += Serial.print(",");
+    count += Serial.print(gps->getFixTime() * 10);
+    count += Serial.print(",");
+    count += Serial.print(gps->getSpeed(), 7);
+    count += Serial.print(",");
+    count += Serial.print(gps->hasWaasLock());
+    count += Serial.print(",");
+    count += Serial.print(compass->getHeading());
+    Serial.print("*");
+    Serial.println(count);
+//    Serial <<
+//        gps->getLatitude() << "," << 
+//        gps->getLongitude() << "," <<
+//        gps->getHdop() << "," << 
+//        gps->getDistanceTraveled() << "," <<
+//        gps->getFixTime() * 10 << "," <<
+//        _FLOAT(gps->getSpeed(), 7) << "," << 
+//        gps->hasWaasLock() << "," <<
+//        compass->getHeading() <<
+//        endl;
   }
-#endif
-
-#if LOG_CTE == 1
-  static void logCrossTrackError(Gps *start, Gps *dest, Gps *car, float magHeading, float pid, int steering,int useCompass, int steeringDiff, boolean pidActive, int nextWaypoint) {
-    Serial.print(nextWaypoint);
-    Serial.print("\t");
-    Serial.print(Pid::getCrosstrackError(start, dest, car));
-    Serial.print("\t");
-    Serial.print(pid);
-    Serial.print("\t");
-    Serial.print(steeringDiff);
-    Serial.print("\t");
-    Serial.print(useCompass);
-    Serial.print("\t");
-    Serial.print(steering);
-    Serial.print("\t");
-    Serial.print(start->getLatitude());
-    Serial.print("\t");
-    Serial.print(start->getLongitude());
-    Serial.print("\t");
-    Serial.print(dest->getLatitude());
-    Serial.print("\t");
-    Serial.print(dest->getLongitude());
-    Serial.print("\t");
-    Serial.print(car->getLatitude());
-    Serial.print("\t");
-    Serial.print(car->getLongitude());
-    Serial.print("\t");
-    Serial.print(car->getHeadingTo(dest));
-    Serial.print("\t");
-    Serial.print(magHeading);
-    Serial.print("\t");
-    if (pidActive) {
-      Serial.print(100);
-    } else {
-      Serial.print(0);
-    }
-    Serial.println();
-  }
-#endif
-
-  static void printFloat (double number, int digits) {
-    // Handle negative numbers
-    if (number < 0.0) {
-       Serial.print('-');
-       number = -number;
-    }
-    // Round correctly so that print(1.999, 2) prints as "2.00"
-    double rounding = 0.5;
-    for (uint8_t i = 0; i < digits; ++i)
-      rounding /= 10.0;
-    number += rounding;
-    // Extract the integer part of the number and print it
-    unsigned long int_part = (unsigned long) number;
-    double remainder = number - (double) int_part;
-    Serial.print(int_part);
-    // Print the decimal point, but only if there are digits beyond
-    if (digits > 0) {
-      Serial.print("."); 
-      // Extract digits from the remainder one at a time
-      while (digits-- > 0) {
-        remainder *= 10.0;
-        int toPrint = int(remainder);
-        Serial.print(toPrint);
-        remainder -= toPrint;
-      }
-    } 
-  }
-
-#if PRINT_DATA == 1
-  static void logHeadingData(Gps *dest, Gps *car, int currentHeading, int normHeading) {
-    Serial.print(dest->getLatitude());
-    Serial.print("\t");
-    Serial.print(dest->getLongitude());
-    Serial.print("\t");
-    printFloat(car->getHeadingTo(dest), 0);
-    Serial.print("\t");
-    Serial.print(car->getLatitude());
-    Serial.print("\t");
-    Serial.print(car->getLongitude());
-    Serial.print("\t");
-    Serial.print(currentHeading);
-    Serial.print("\t");
-    Serial.print(normHeading);
-    Serial.println();
-  }
-#endif
-
-#if PRINT_HEADINGS == 1
-  static void logHeadingColumnNames() {
-    Serial.print("dLat\t");
-    Serial.print("dLon\t");
-    Serial.print("gps Heading\t");
-    Serial.print("gps lat\t");
-    Serial.print("gps lon\t");
-    Serial.print("curr Head\t");
-    Serial.print("norm Heading");
-  }
-#endif
-
-#if PRINT_GPS == 1
-  static void logGpsReadings(long latitude, long longitude, TinyGPS *gps, float hdop) {
-    Serial.print("Lat: ");
-    Serial.print(latitude);
-    Serial.print(", Long: ");
-    Serial.print(longitude);
-    Serial.print(", Alt: ");
-    Serial.print(gps->f_altitude());
-    Serial.print(" Meters, GPS Heading: ");
-    Serial.print(gps->f_course());
-    Serial.print(" degrees");
-    unsigned char fix_type = gps->fix_type();
-    Serial.print(", Fix type: ");
-    Serial.write(fix_type);
-    unsigned char sats = gps->satellites();
-    Serial.print(", Sats: ");
-    Serial.print(sats, DEC);
-    Serial.print(", HDOP: ");
-    Serial.print(hdop);
-    Serial.println();
-  }
-#endif
 };
 
 #endif
