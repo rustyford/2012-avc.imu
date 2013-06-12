@@ -1,6 +1,5 @@
 #include <TinyGPS.h>
 #include <HMC5883L.h>
-//#include <SoftwareSerial.h>
 #include <Streaming.h>
 #include "Gps.h"
 #include "AvcCompass.h"
@@ -18,10 +17,11 @@
 #define WAAS_BLINK_MILLIS 1000
 #define LOOP_SPEED 20 // HERTZ
 
-#define MULTIPLE_LOG_TYPES 1
+#define MULTIPLE_LOG_TYPES 0
 #define LOG_CALLIBRATION 0
 #define LOG_ALL_GPS_DATA 0
 #define LOG_CAMERA 0
+#define LOG_KALMAN_DATA 1
 
 // LED vars
 int isLedOn = 0;
@@ -30,6 +30,7 @@ boolean callibrating = false;
 
 unsigned long previousTime = 0;
 unsigned long fiveHertzTime = 0;
+unsigned long odometerMicros = 0;
 
 #define RXPIN A0
 #define TXPIN A1
@@ -90,7 +91,7 @@ void loop() {
     location.checkGps(&mySerial);
     compass.update();
     mpu.update(MPU6000_newdata);
-    if (millis() - previousTime > 1000 / LOOP_SPEED && !LOG_CALLIBRATION) {
+    if (millis() - previousTime >= 1000 / LOOP_SPEED && !LOG_CALLIBRATION) {
       previousTime = millis();
 //      controlGpsLed(&location);
 #if MULTIPLE_LOG_TYPES
@@ -99,6 +100,14 @@ void loop() {
       if (previousFixTime != location.getFixTime()) {
         previousFixTime = location.getFixTime();
         Logger::logGpsData(&location);
+      }
+#elif LOG_KALMAN_DATA
+      long timeDelta = micros() - odometerMicros;
+      odometerMicros = micros();
+      if (location.isUpdated()) {
+        Logger::logKalman (&location, &compass, &mpu, getSpeed(float(timeDelta)/1000000.0));
+      } else {
+        Logger::logKalman (&compass, &mpu, getSpeed(float(timeDelta)/1000000.0));
       }
 #else
       Logger::logImuData (&location, &compass);
@@ -119,8 +128,6 @@ void loop() {
 #endif
     }
   }
-//    Serial.println(odometerCount);
-
 }
 
 // MPU6000 INTERRUPT ON INT1
@@ -131,4 +138,11 @@ void MPU6000_data_int()
 
 ISR(PCINT1_vect) {
   odometerCount++;
+}
+
+float getSpeed (float time) {
+  int count = odometerCount;
+  odometerCount = 0;
+  
+  return (float(count) * .060476)/time;
 }
