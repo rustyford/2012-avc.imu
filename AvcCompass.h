@@ -21,10 +21,10 @@ class AvcCompass {
   int minX;
   int minY;
   int minZ;
-  // declination angle 10 deg 55 min
-//  static const float declinationAngle = -(10.0 + .55 / .6);
-//  denver co 8 deg 51 min
-  static const float declinationAngle = -(8.0 + .51 / .6);
+//  phoenix declination angle 10 deg 46 min
+  static const float declinationAngle = -(10.0 + .46 / .6);
+//  denver co 8 deg 50 min
+//  static const float declinationAngle = -(8.0 + .50 / .6);
 
   HMC5883L compass;
 
